@@ -1,9 +1,8 @@
 local curl = require("plenary.curl")
-local render_markdown = require("render-markdown")
 
-local Gemini = {}
+local M = {}
 
-Gemini.config = {
+M.config = {
   api_key = vim.env.GEMINI_API_KEY,
   api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
 }
@@ -48,7 +47,7 @@ function gemini_complete(prompt, cb2, bufnr)
 
   vim.notify("Sending request to Gemini API...", vim.log.levels.INFO)
 
-  curl.post(Gemini.config.api_url .. "?key=" .. Gemini.config.api_key, {
+  curl.post(M.config.api_url .. "?key=" .. M.config.api_key, {
     body = vim.fn.json_encode({
       contents = {
         {
@@ -81,8 +80,8 @@ function gemini_complete(prompt, cb2, bufnr)
   })
 end
 
-function Gemini:check_api_key()
-  if not Gemini.config.api_key then
+function M:check_api_key()
+  if not M.config.api_key then
     vim.notify("No API key found. Please set GEMINI_API_KEY in your environment variables.", vim.log.levels.ERROR)
     return false
   end
@@ -113,14 +112,14 @@ local function create_gemini_popup()
 
   -- Create the output buffer (top 2/3, read-only)
   local output_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_option(output_buf, "buftype", "nofile")
-  vim.api.nvim_buf_set_option(output_buf, "modifiable", false)
-  vim.api.nvim_buf_set_option(output_buf, "readonly", true)
+  vim.bo[output_buf].buftype = "nofile"
+  vim.bo[output_buf].modifiable = false
+  vim.bo[output_buf].readonly = true
 
   -- Create the input buffer (bottom 1/3)
   local input_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_option(input_buf, "buftype", "nofile")
-  vim.api.nvim_buf_set_option(input_buf, "modifiable", true)
+  vim.bo[input_buf].buftype = "nofile"
+  vim.bo[input_buf].modifiable = true
 
   -- Create the floating window
   local win_opts = {
@@ -194,7 +193,7 @@ end
 
 vim.api.nvim_create_user_command("GeminiPopup", create_gemini_popup, {})
 
-Gemini.open_floating_window = open_floating_window
+M.open_floating_window = open_floating_window
 
 ---------------------------------------------------------------------------------------------------
 
@@ -203,4 +202,4 @@ vim.api.nvim_create_user_command("GeminiComplete", function()
   gemini:complete()
 end, { nargs = "*", desc = "Get code completion" })
 
-return Gemini
+return M
